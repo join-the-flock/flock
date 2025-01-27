@@ -45,11 +45,15 @@ if [ -z "$ENGINE_VERSION" ] && [ -f "$FLUTTER_ROOT/DEPS" ] && [ -f "$FLUTTER_ROO
     exit_code=$?
     set -e
 
-    if [[ $exit_code -eq 0 ]]; then
-      ENGINE_VERSION=$(git -C "$FLUTTER_ROOT" merge-base HEAD upstream/master)
-    else
-      ENGINE_VERSION=$(git -C "$FLUTTER_ROOT" merge-base HEAD origin/master)
-    fi
+    # FLOCK: For the engine version, use the git commit hash for the most recent Flutter
+    #        commit, instead of the most recent Flock commit.
+    ENGINE_VERSION=$(git -C "$FLUTTER_ROOT" rev-parse flock-engine-hash^{commit})
+
+    # if [[ $exit_code -eq 0 ]]; then
+    #   ENGINE_VERSION=$(git -C "$FLUTTER_ROOT" merge-base HEAD upstream/master)
+    # else
+    #   ENGINE_VERSION=$(git -C "$FLUTTER_ROOT" merge-base HEAD origin/master)
+    # fi
   else
     ENGINE_VERSION=$(git -C "$FLUTTER_ROOT" rev-parse HEAD)
   fi
