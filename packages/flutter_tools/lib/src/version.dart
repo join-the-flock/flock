@@ -877,6 +877,9 @@ class VersionUpstreamValidator {
     'https://github.com/flutter/flutter.git',
     'git@github.com:flutter/flutter.git',
     'ssh://git@github.com/flutter/flutter.git',
+    'https://github.com/join-the-flock/flock.git',
+    'git@github.com:join-the-flock/flock.git',
+    'ssh://git@github.com/join-the-flock/flock.git',
   ];
 
   // Strips ".git" suffix from a given string, preferably an url.
@@ -1113,7 +1116,7 @@ class GitTagVersion {
         }
       } else {
         final String flutterGit =
-            platform.environment['FLUTTER_GIT_URL'] ?? 'https://github.com/flutter/flutter.git';
+            platform.environment['FLUTTER_GIT_URL'] ?? 'https://github.com/join-the-flock/flock.git';
         git.runSync(['fetch', flutterGit, '--tags', '-f'], workingDirectory: workingDirectory);
       }
     }
@@ -1497,6 +1500,9 @@ bool _isStandardRemote(String remote) {
     'https://github.com/flutter/flutter.git',
     'git@github.com:flutter/flutter.git',
     'ssh://git@github.com/flutter/flutter.git',
+    'https://github.com/join-the-flock/flock.git',
+    'git@github.com:join-the-flock/flock.git',
+    'ssh://git@github.com/join-the-flock/flock.git',
   ]) {
     if (VersionUpstreamValidator.stripDotGit(standard) == sanitized) {
       return true;
