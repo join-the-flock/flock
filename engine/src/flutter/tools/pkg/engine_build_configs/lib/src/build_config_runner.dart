@@ -638,6 +638,9 @@ final class BuildRunner extends Runner {
   }
 
   Future<bool> _runNinja(RunnerEventHandler eventHandler) async {
+    if (build.ninja.config.isEmpty) {
+      return true;
+    }
     if (_isRbe) {
       if (!await _bootstrapRbe(eventHandler)) {
         return false;

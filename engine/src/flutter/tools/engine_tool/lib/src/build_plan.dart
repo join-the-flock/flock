@@ -16,6 +16,7 @@ const _flagConfig = 'config';
 const _flagConcurrency = 'concurrency';
 const _flagStrategy = 'build-strategy';
 const _flagRbe = 'rbe';
+const _flagRunTests = 'run-tests';
 const _flagLto = 'lto';
 const _flagExtraGnArgs = 'gn-args';
 
@@ -52,6 +53,7 @@ final class BuildPlan {
     return BuildPlan._(
       build: build,
       strategy: BuildStrategy.values.byName(args.option(_flagStrategy)!),
+      runTests: args.flag(_flagRunTests),
       useRbe: () {
         final bool useRbe = args.flag(_flagRbe);
         if (useRbe && !environment.hasRbeConfigInTree()) {
@@ -86,6 +88,7 @@ final class BuildPlan {
   BuildPlan._({
     required this.build,
     required this.strategy,
+    required this.runTests,
     required this.useRbe,
     required this.useLto,
     required this.concurrency,
@@ -203,6 +206,19 @@ final class BuildPlan {
       hide: !environment.verbose,
     );
 
+    // Add --run-tests.
+    parser.addFlag(
+      _flagRunTests,
+      defaultsTo: false,
+      help: () {
+        var runTestsHelp = 'Run tests (tests will not run by default).';
+        if (environment.verbose) {
+          runTestsHelp += '\n\n$runTestsHelp';
+        }
+        return runTestsHelp;
+      }(),
+    );
+
     // Add --rbe.
     final bool hasRbeConfigInTree = environment.hasRbeConfigInTree();
     parser.addFlag(
@@ -245,6 +261,9 @@ final class BuildPlan {
 
     return builds;
   }
+
+  /// Whether to run tests
+  final bool runTests;
 
   /// The build configuration to use.
   final Build build;
