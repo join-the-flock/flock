@@ -223,7 +223,6 @@ final class Build extends BuildConfigBase {
     }
 
     if (name == null ||
-        description == null ||
         gn == null ||
         ninja == null ||
         archives == null ||
@@ -235,7 +234,7 @@ final class Build extends BuildConfigBase {
     }
     return Build._(
       name,
-      description,
+      description ?? "",
       gn,
       ninja,
       tests,
@@ -373,14 +372,10 @@ final class BuildTest extends BuildConfigBase {
     final String? script = stringOfJson(map, 'script', errors);
     final List<String>? parameters = stringListOfJson(map, 'parameters', errors);
     final List<String>? contexts = stringListOfJson(map, 'contexts', errors);
-    if (name == null ||
-        language == null ||
-        script == null ||
-        parameters == null ||
-        contexts == null) {
+    if (name == null || script == null || parameters == null || contexts == null) {
       return BuildTest._invalid(errors);
     }
-    return BuildTest._(name, language, script, parameters, contexts);
+    return BuildTest._(name, language ?? "", script, parameters, contexts);
   }
 
   BuildTest._(this.name, this.language, this.script, this.parameters, this.contexts) : super(null);
@@ -435,10 +430,10 @@ final class BuildTask extends BuildConfigBase {
     final String? language = stringOfJson(map, 'language', errors);
     final List<String>? scripts = stringListOfJson(map, 'scripts', errors);
     final List<String>? parameters = stringListOfJson(map, 'parameters', errors);
-    if (name == null || language == null || scripts == null || parameters == null) {
+    if (name == null || scripts == null || parameters == null) {
       return BuildTask._invalid(errors);
     }
-    return BuildTask._(name, language, scripts, parameters);
+    return BuildTask._(name, language ?? "", scripts, parameters);
   }
 
   BuildTask._invalid(super.errors)
@@ -788,7 +783,7 @@ List<String>? stringListOfJson(Map<String, Object?> map, String field, List<Stri
 
 String? stringOfJson(Map<String, Object?> map, String field, List<String> errors) {
   if (map[field] == null) {
-    return '<undef>';
+    return null;
   }
   if (map[field]! is! String) {
     appendTypeError(map, field, 'string', errors);
