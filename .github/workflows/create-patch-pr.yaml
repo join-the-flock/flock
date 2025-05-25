@@ -1,0 +1,121 @@
+name: Sync reviewed PR to patches repo
+
+on:
+  pull_request_target:
+    types: [closed]
+    branches: [master]
+
+jobs:
+  export-and-pr:
+    # Closing a reviewed PR with this label exports it; merging is not required.
+    if: contains(github.event.pull_request.labels.*.name, 'merge')
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    env:
+      DEST_REPO: ${{ vars.PATCH_REPO }}
+      CHANNEL: ${{ github.event.pull_request.base.ref }}
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      BRANCH_NAME: add-patch-pr-${{ github.event.pull_request.number }}
+      GH_TOKEN: ${{ secrets.REPO_WORKFLOW_PAT }} # Must write contents and PRs in DEST_REPO.
+
+    steps:
+      - name: Validate destination configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${DEST_REPO:?Set the PATCH_REPO repository variable}"
+          : "${GH_TOKEN:?Set the REPO_WORKFLOW_PAT repository secret}"
+
+      # Only inspect the PR's Git history. Never execute scripts from its checkout
+      # in this privileged pull_request_target workflow.
+      - name: Checkout PR commits
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+          path: source
+
+      - name: Identify PR commit range
+        id: range
+        shell: bash
+        working-directory: source
+        run: |
+          set -euo pipefail
+          git fetch origin "$BASE_SHA"
+          BASE=$(git merge-base "$BASE_SHA" HEAD)
+          if [[ -n "$(git rev-list --merges "$BASE..HEAD")" ]]; then
+            echo '::error::Rebase the PR into a linear commit series before exporting.'
+            exit 1
+          fi
+          echo "base=$BASE" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout Nest tooling
+        uses: actions/checkout@v4
+        with:
+          repository: join-the-flock/nest
+          ref: main
+          persist-credentials: false
+          path: nest
+
+      - name: Set up Dart
+        uses: dart-lang/setup-dart@v1
+
+      - name: Resolve tooling dependencies
+        working-directory: nest/nest_patches
+        run: dart pub get --enforce-lockfile
+
+      - name: Checkout destination repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.DEST_REPO }}
+          token: ${{ env.GH_TOKEN }}
+          path: dest
+
+      - name: Export PR patches
+        shell: bash
+        env:
+          PATCH_BASE: ${{ steps.range.outputs.base }}
+        run: |
+          set -euo pipefail
+          test -f "dest/.patches-$CHANNEL"
+          # Every mail patch has a From header. Matching it selects every PR
+          # commit while enabling the exporter's additive mode, preserving the
+          # channel's existing patches and its protection for shared patches.
+          dart run nest/nest_patches/bin/git_export_patches.dart \
+            --flutter source \
+            --patches-dir dest \
+            --channel "$CHANNEL" \
+            --grep 'From ' \
+            "$PATCH_BASE..HEAD"
+
+      - name: Commit and push
+        shell: bash
+        working-directory: dest
+        run: |
+          set -euo pipefail
+          git checkout -b "$BRANCH_NAME"
+          git config user.name "patch-bot"
+          git config user.email "patch-bot@users.noreply.github.com"
+          git add -- '*.patch' ".patches-$CHANNEL"
+          if git diff --cached --quiet; then
+            echo '::error::The PR produced no patch changes.'
+            exit 1
+          fi
+          git commit -m "chore: add patches for $GITHUB_REPOSITORY PR #$PR_NUMBER"
+          git push -u origin "$BRANCH_NAME"
+
+      - name: Create PR in destination repo
+        shell: bash
+        working-directory: dest
+        run: |
+          set -euo pipefail
+          gh pr create \
+            --repo "$DEST_REPO" \
+            --head "$BRANCH_NAME" \
+            --title "Add patches for $GITHUB_REPOSITORY PR #$PR_NUMBER" \
+            --body "Automated patches generated from https://github.com/$GITHUB_REPOSITORY/pull/$PR_NUMBER for the $CHANNEL channel."
