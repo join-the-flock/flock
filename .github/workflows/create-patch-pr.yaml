@@ -1,0 +1,74 @@
+name: Sync merged PR to patches repo
+
+on:
+  pull_request_target:
+    types: [closed]
+    branches: [master]
+
+jobs:
+  export-and-pr:
+    if: contains(join(github.event.pull_request.labels.*.name, ','), 'merge')
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read          # for actions/checkout on source repo
+      id-token: write         # if using OIDC to push
+      pull-requests: write    # to open the PR in destination repo
+
+    env:
+      DEST_REPO: ${{ vars.PATCH_REPO }}
+      PATCHES_DIR: . # folder managed by git-import-patches
+      BRANCH_NAME: add-patch-pr-${{ github.event.pull_request.number }}
+      GH_TOKEN: ${{ secrets.REPO_WORKFLOW_PAT }}   # PAT with repo scope on DEST_REPO
+
+    steps:
+      # 1. ---  Download the patch supplied by GitHub -----------------------------
+      - name: Download PR patch
+        id: patch
+        run: |
+          PR=${{ github.event.pull_request.number }}
+          SAFE_TITLE=$(echo "${{ github.event.pull_request.title }}" | tr ' ' '-' | tr -cd 'A-Za-z0-9._-')
+          PATCH_NAME="${PR}-${SAFE_TITLE}.patch"
+
+          # Works for private repos because we add the token
+          curl -L \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github.v3.patch" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/pulls/${PR}" \
+            -o "${PATCH_NAME}"
+
+          echo "patch_name=${PATCH_NAME}" >> "$GITHUB_OUTPUT"
+
+      # ── 2. Clone the destination (patches) repo on a new branch ───────────────
+      - name: Checkout destination repo
+        run: |
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/${DEST_REPO}.git" dest
+          cd dest
+          git checkout -b "${BRANCH_NAME}"
+
+      # ── 3. Copy patch + update index file ─────────────────────────────────────
+      - name: Copy patch and update .patches
+        run: |
+          cd dest
+          PATCH="${{ steps.patch.outputs.patch_name }}"
+          cp "../${PATCH}" "${PATCHES_DIR}/${PATCH}"
+          echo "" >> "${PATCHES_DIR}/.patches" && echo -n "${PATCH}" >> "${PATCHES_DIR}/.patches"
+          git add "${PATCHES_DIR}/${PATCH}" "${PATCHES_DIR}/.patches"
+
+      # ── 4. Commit & push ──────────────────────────────────────────────────────
+      - name: Commit and push
+        run: |
+          cd dest
+          git config user.name  "patch-bot"
+          git config user.email "patch-bot@users.noreply.github.com"
+          git commit -m "chore: add patch for source PR #${{ github.event.pull_request.number }}"
+          git push -u origin "${BRANCH_NAME}"
+
+      # ── 5. Open PR against destination repo default branch ────────────────────
+      - name: Create PR in destination repo
+        run: |
+          cd dest
+          gh pr create \
+            --head "${BRANCH_NAME}" \
+            --title "Add patch for source PR #${{ github.event.pull_request.number }}" \
+            --body "Automated patch generated from ${{ github.repository }} PR #${{ github.event.pull_request.number }}."
