@@ -5,6 +5,8 @@
 import Darwin
 import Foundation
 
+import os
+
 /// The level of logging severity.
 ///
 /// These levels are used by `Logger` to determine if a message should be output.
@@ -116,11 +118,33 @@ public protocol OutputWriter {
   func writeLine(level: LogLevel, _ message: String)
 }
 
+/// Maps your existing `LogLevel` enum to Unified-Logging severities.
+/// Adjust the mapping to taste.
+private extension LogLevel {
+  var osType: OSLogType {
+    switch self {
+    case .info:      return .info
+    case .warning:   return .default
+    case .error:     return .error
+    case .important: return .fault
+    case .fatal:     return .fault
+    }
+  }
+}
+
+/// Writes to the system log using Unified Logging.
+/// The log is visible in Console.app (macOS) or via `log stream` on iOS.
 final class SyslogOutputWriter: OutputWriter {
+
+  /// One static `OSLog` (or Swift-5.5 `Logger`) per subsystem/category pair
+  private static let log = OSLog(
+    subsystem: Bundle.main.bundleIdentifier ?? "org.flutter",
+    category: "flutter"
+  )
+
   func writeLine(level: LogLevel, _ message: String) {
-    // TODO(cbracken): replace this with os_log-based approach.
-    // https://github.com/flutter/flutter/issues/44030
-    message.withCString { vsyslog(LOG_ALERT, "%s", getVaList([$0])) }
+    // `%{public}@` = do not redact at runtime; use `%{private}@` for sensitive data
+    os_log("%{public}@", log: Self.log, type: level.osType, message)
   }
 }
 
