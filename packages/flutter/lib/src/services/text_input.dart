@@ -28,17 +28,7 @@ import 'system_channels.dart';
 import 'text_editing.dart';
 import 'text_editing_delta.dart';
 
-export 'dart:ui'
-    show
-        Brightness,
-        FontWeight,
-        Offset,
-        Rect,
-        Size,
-        TextAlign,
-        TextDirection,
-        TextPosition,
-        TextRange;
+export 'dart:ui' show Brightness, FontWeight, Offset, Rect, Size, TextAlign, TextDirection, TextPosition, TextRange;
 
 export 'package:vector_math/vector_math_64.dart' show Matrix4;
 
@@ -102,7 +92,9 @@ enum SmartQuotesType {
 /// can specify whether it supports decimal numbers and/or signed numbers.
 @immutable
 class TextInputType {
-  const TextInputType._(this.index) : signed = null, decimal = null;
+  const TextInputType._(this.index)
+      : signed = null,
+        decimal = null;
 
   /// Optimize for numerical information.
   ///
@@ -265,10 +257,7 @@ class TextInputType {
 
   @override
   bool operator ==(Object other) {
-    return other is TextInputType &&
-        other.index == index &&
-        other.signed == signed &&
-        other.decimal == decimal;
+    return other is TextInputType && other.index == index && other.signed == signed && other.decimal == decimal;
   }
 
   @override
@@ -530,10 +519,8 @@ class TextInputConfiguration {
     this.enableIMEPersonalizedLearning = true,
     this.allowedMimeTypes = const <String>[],
     this.enableDeltaModel = false,
-  }) : smartDashesType =
-           smartDashesType ?? (obscureText ? SmartDashesType.disabled : SmartDashesType.enabled),
-       smartQuotesType =
-           smartQuotesType ?? (obscureText ? SmartQuotesType.disabled : SmartQuotesType.enabled);
+  })  : smartDashesType = smartDashesType ?? (obscureText ? SmartDashesType.disabled : SmartDashesType.enabled),
+        smartQuotesType = smartQuotesType ?? (obscureText ? SmartQuotesType.disabled : SmartQuotesType.enabled);
 
   /// The ID of the view that the text input belongs to.
   ///
@@ -718,8 +705,7 @@ class TextInputConfiguration {
       inputAction: inputAction ?? this.inputAction,
       textCapitalization: textCapitalization ?? this.textCapitalization,
       keyboardAppearance: keyboardAppearance ?? this.keyboardAppearance,
-      enableIMEPersonalizedLearning:
-          enableIMEPersonalizedLearning ?? this.enableIMEPersonalizedLearning,
+      enableIMEPersonalizedLearning: enableIMEPersonalizedLearning ?? this.enableIMEPersonalizedLearning,
       allowedMimeTypes: allowedMimeTypes ?? this.allowedMimeTypes,
       autofillConfiguration: autofillConfiguration ?? this.autofillConfiguration,
       enableDeltaModel: enableDeltaModel ?? this.enableDeltaModel,
@@ -910,7 +896,7 @@ class RawFloatingCursorPoint {
   /// [state] must not be null and [offset] must not be null if the state is
   /// [FloatingCursorDragState.Update].
   RawFloatingCursorPoint({this.offset, this.startLocation, required this.state})
-    : assert(state != FloatingCursorDragState.Update || offset != null);
+      : assert(state != FloatingCursorDragState.Update || offset != null);
 
   /// The raw position of the floating cursor as determined by the iOS sdk.
   final Offset? offset;
@@ -1017,8 +1003,7 @@ class TextEditingValue {
   /// If this property is false while the [composing] range's `isValid` is true,
   /// it usually indicates the current [composing] range is invalid because of a
   /// programming error.
-  bool get isComposingRangeValid =>
-      composing.isValid && composing.isNormalized && composing.end <= text.length;
+  bool get isComposingRangeValid => composing.isValid && composing.isNormalized && composing.end <= text.length;
 
   /// Returns a new [TextEditingValue], which is this [TextEditingValue] with
   /// its [text] partially replaced by the `replacementString`.
@@ -1054,14 +1039,12 @@ class TextEditingValue {
 
     int adjustIndex(int originalIndex) {
       // The length added by adding the replacementString.
-      final int replacedLength =
-          originalIndex <= replacementRange.start && originalIndex < replacementRange.end
-              ? 0
-              : replacementString.length;
+      final int replacedLength = originalIndex <= replacementRange.start && originalIndex < replacementRange.end
+          ? 0
+          : replacementString.length;
       // The length removed by removing the replacementRange.
       final int removedLength =
-          originalIndex.clamp(replacementRange.start, replacementRange.end) -
-          replacementRange.start;
+          originalIndex.clamp(replacementRange.start, replacementRange.end) - replacementRange.start;
       return originalIndex + replacedLength - removedLength;
     }
 
@@ -1683,8 +1666,7 @@ TextInputAction _toTextInputAction(String action) {
     'TextInputAction.emergencyCall' => TextInputAction.emergencyCall,
     'TextInputAction.done' => TextInputAction.done,
     'TextInputAction.newline' => TextInputAction.newline,
-    _ =>
-      throw FlutterError.fromParts(<DiagnosticsNode>[
+    _ => throw FlutterError.fromParts(<DiagnosticsNode>[
         ErrorSummary('Unknown text input action: $action'),
       ]),
   };
@@ -1695,8 +1677,7 @@ FloatingCursorDragState _toTextCursorAction(String state) {
     'FloatingCursorDragState.start' => FloatingCursorDragState.Start,
     'FloatingCursorDragState.update' => FloatingCursorDragState.Update,
     'FloatingCursorDragState.end' => FloatingCursorDragState.End,
-    _ =>
-      throw FlutterError.fromParts(<DiagnosticsNode>[
+    _ => throw FlutterError.fromParts(<DiagnosticsNode>[
         ErrorSummary('Unknown text cursor action: $state'),
       ]),
   };
@@ -1711,10 +1692,9 @@ RawFloatingCursorPoint _toTextPoint(FloatingCursorDragState state, Map<String, d
     encoded['Y'] != null,
     'You must provide a value for the vertical location of the floating cursor.',
   );
-  final Offset offset =
-      state == FloatingCursorDragState.Update
-          ? Offset((encoded['X'] as num).toDouble(), (encoded['Y'] as num).toDouble())
-          : Offset.zero;
+  final Offset offset = state == FloatingCursorDragState.Update
+      ? Offset((encoded['X'] as num).toDouble(), (encoded['Y'] as num).toDouble())
+      : Offset.zero;
   return RawFloatingCursorPoint(offset: offset, state: state);
 }
 
@@ -1786,8 +1766,7 @@ class TextInput {
   @visibleForTesting
   static void setChannel(MethodChannel newChannel) {
     assert(() {
-      _instance._channel =
-          newChannel..setMethodCallHandler(_instance._loudlyHandleTextInputInvocation);
+      _instance._channel = newChannel..setMethodCallHandler(_instance._loudlyHandleTextInputInvocation);
       return true;
     }());
   }
@@ -1933,7 +1912,27 @@ class TextInput {
 
   late MethodChannel _channel;
 
-  TextInputConnection? _currentConnection;
+  //-------- FLOCK -----------
+  // ADJUSTMENT: Change from Flutter's connection property to a getter/setter pair.
+  //             We do this to notify Flock when the connection changes so that Flock can
+  //             notify any app-level IME connection observers.
+  TextInputConnection? get _currentConnection => __currentConnection;
+  TextInputConnection? __currentConnection;
+  set _currentConnection(TextInputConnection? newConnection) {
+    if (newConnection == __currentConnection) {
+      return;
+    }
+
+    _flockIsImeConnected.value = newConnection != null;
+
+    __currentConnection = newConnection;
+  }
+
+  /// Use `Flock.ime.connectionStatus` instead of this property.
+  static ValueListenable<bool> get flockIsImeConnected => _flockIsImeConnected;
+  static final ValueNotifier<bool> _flockIsImeConnected = ValueNotifier<bool>(false);
+  //------ END FLOCK ---------
+
   late TextInputConfiguration _currentConfiguration;
 
   final Map<String, ScribbleClient> _scribbleClients = <String, ScribbleClient>{};
@@ -1956,14 +1955,13 @@ class TextInput {
           stack: stack,
           library: 'services library',
           context: ErrorDescription('during method call ${call.method}'),
-          informationCollector:
-              () => <DiagnosticsNode>[
-                DiagnosticsProperty<MethodCall>(
-                  'call',
-                  call,
-                  style: DiagnosticsTreeStyle.errorProperty,
-                ),
-              ],
+          informationCollector: () => <DiagnosticsNode>[
+            DiagnosticsProperty<MethodCall>(
+              'call',
+              call,
+              style: DiagnosticsTreeStyle.errorProperty,
+            ),
+          ],
         ),
       );
       rethrow;
@@ -1981,27 +1979,21 @@ class TextInput {
         return;
       case 'TextInputClient.requestElementsInRect':
         final List<double> args =
-            (methodCall.arguments as List<dynamic>)
-                .cast<num>()
-                .map<double>((num value) => value.toDouble())
-                .toList();
-        return _scribbleClients.keys
-            .where((String elementIdentifier) {
-              final Rect rect = Rect.fromLTWH(args[0], args[1], args[2], args[3]);
-              if (!(_scribbleClients[elementIdentifier]?.isInScribbleRect(rect) ?? false)) {
-                return false;
-              }
-              final Rect bounds = _scribbleClients[elementIdentifier]?.bounds ?? Rect.zero;
-              return !(bounds == Rect.zero || bounds.hasNaN || bounds.isInfinite);
-            })
-            .map((String elementIdentifier) {
-              final Rect bounds = _scribbleClients[elementIdentifier]!.bounds;
-              return <dynamic>[
-                elementIdentifier,
-                ...<dynamic>[bounds.left, bounds.top, bounds.width, bounds.height],
-              ];
-            })
-            .toList();
+            (methodCall.arguments as List<dynamic>).cast<num>().map<double>((num value) => value.toDouble()).toList();
+        return _scribbleClients.keys.where((String elementIdentifier) {
+          final Rect rect = Rect.fromLTWH(args[0], args[1], args[2], args[3]);
+          if (!(_scribbleClients[elementIdentifier]?.isInScribbleRect(rect) ?? false)) {
+            return false;
+          }
+          final Rect bounds = _scribbleClients[elementIdentifier]?.bounds ?? Rect.zero;
+          return !(bounds == Rect.zero || bounds.hasNaN || bounds.isInfinite);
+        }).map((String elementIdentifier) {
+          final Rect bounds = _scribbleClients[elementIdentifier]!.bounds;
+          return <dynamic>[
+            elementIdentifier,
+            ...<dynamic>[bounds.left, bounds.top, bounds.width, bounds.height],
+          ];
+        }).toList();
       case 'TextInputClient.scribbleInteractionBegan':
         _scribbleInProgress = true;
         return;
