@@ -97,11 +97,36 @@ class MacOSDevice extends DesktopDevice {
       _logger.printError('Failed to foreground app; application bundle not found');
       return;
     }
-    _processManager.run(<String>['open', applicationBundle]).then((ProcessResult result) {
-      if (result.exitCode != 0) {
-        _logger.printError('Failed to foreground app; open returned ${result.exitCode}');
+
+    // Retry logic to handle transient failures when app is still launching
+    _foregroundAppWithRetry(applicationBundle, maxRetries: 3);
+  }
+
+  Future<void> _foregroundAppWithRetry(String applicationBundle, {int maxRetries = 3}) async {
+    for (int attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        final ProcessResult result = await _processManager.run(<String>['open', applicationBundle]);
+        if (result.exitCode == 0) {
+          return; // Success
+        }
+
+        if (attempt < maxRetries - 1) {
+          // Wait before retrying (increasing delay)
+          await Future<void>.delayed(Duration(milliseconds: 100 * (attempt + 1)));
+          _logger.printTrace('Retrying foreground app (attempt ${attempt + 2}/$maxRetries)');
+        } else {
+          // Final attempt failed, log detailed error
+          _logger.printTrace('Failed to foreground app after $maxRetries attempts; open returned ${result.exitCode}');
+          if (result.stderr.toString().isNotEmpty) {
+            _logger.printTrace('stderr: ${result.stderr}');
+          }
+        }
+      } catch (e) {
+        if (attempt == maxRetries - 1) {
+          _logger.printTrace('Failed to foreground app: $e');
+        }
       }
-    });
+    }
   }
 }
 
