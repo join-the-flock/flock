@@ -451,7 +451,10 @@ class _FadeForwardsPageTransition extends StatelessWidget {
 class FadeForwardsPageTransitionsBuilder extends PageTransitionsBuilder {
   /// Constructs a page transition animation that matches the transition used on
   /// Android U.
-  const FadeForwardsPageTransitionsBuilder({this.backgroundColor});
+  const FadeForwardsPageTransitionsBuilder({
+    this.backgroundColor,
+    this.transitionDuration = const Duration(milliseconds: 450),
+  });
 
   /// The background color during transition between two routes.
   ///
@@ -461,16 +464,12 @@ class FadeForwardsPageTransitionsBuilder extends PageTransitionsBuilder {
   /// Defaults to [ColorScheme.surface]
   final Color? backgroundColor;
 
-  /// The value of [transitionDuration] in milliseconds.
+  /// The duration of the transition animation.
   ///
-  /// Eyeballed on a physical Pixel 9 running Android 16. This does not match
-  /// the actual value used by native Android, which is 800ms, because native
-  /// Android is using Material 3 Expressive springs that are not currently
-  /// supported by Flutter. So for now at least, this is an approximation.
-  static const int kTransitionMilliseconds = 450;
-
+  /// Defaults to 450 milliseconds for improved performance over the previous
+  /// 800ms duration. This can be customized to match specific app requirements.
   @override
-  Duration get transitionDuration => const Duration(milliseconds: kTransitionMilliseconds);
+  final Duration transitionDuration;
 
   @override
   DelegatedTransitionBuilder? get delegatedTransition =>

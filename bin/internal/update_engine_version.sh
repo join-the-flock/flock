@@ -53,11 +53,18 @@ if [ -n "${FLUTTER_PREBUILT_ENGINE_VERSION}" ]; then
 elif [ -n "$(git -C "$FLUTTER_ROOT" ls-files bin/internal/engine.version)" ]; then
   ENGINE_VERSION="$(cat "$FLUTTER_ROOT/bin/internal/engine.version")"
 
-# Fallback to using git to triangulate which upstream/master (or origin/master)
-# the current branch is forked from, which would be the last version of the
-# engine artifacts built from CI.
-else
-  ENGINE_VERSION=$("$FLUTTER_ROOT/bin/internal/content_aware_hash.sh")
+    # FLOCK: For the engine version, use the git commit hash for the most recent Flutter
+    #        commit, instead of the most recent Flock commit.
+    ENGINE_VERSION=$(git -C "$FLUTTER_ROOT" rev-parse flock-engine-hash^{commit})
+
+    # if [[ $exit_code -eq 0 ]]; then
+    #   ENGINE_VERSION=$(git -C "$FLUTTER_ROOT" merge-base HEAD upstream/master)
+    # else
+    #   ENGINE_VERSION=$(git -C "$FLUTTER_ROOT" merge-base HEAD origin/master)
+    # fi
+  else
+    ENGINE_VERSION=$(git -C "$FLUTTER_ROOT" rev-parse HEAD)
+  fi
 fi
 
 # Write the engine version out so downstream tools know what to look for.
