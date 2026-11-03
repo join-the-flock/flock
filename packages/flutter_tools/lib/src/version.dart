@@ -16,6 +16,8 @@ import 'convert.dart';
 import 'features.dart';
 import 'git.dart';
 
+part 'flock_version.dart';
+
 /// The default version when a version could not be determined.
 const kUnknownFrameworkVersion = '0.0.0-unknown';
 
@@ -84,6 +86,7 @@ abstract class FlutterVersion {
     if (!fetchTags && versionFile.existsSync()) {
       final _FlutterVersionFromFile? version = _FlutterVersionFromFile.tryParseFromFile(
         versionFile,
+        clock: clock,
         git: git,
         flutterRoot: flutterRoot,
         logger: logger,
@@ -288,11 +291,10 @@ abstract class FlutterVersion {
 
   @override
   String toString() {
+    final flock = _FlockVersionDescription(this);
     final versionText = frameworkVersion == kUnknownFrameworkVersion ? '' : ' $frameworkVersion';
-    final flutterText =
-        'Flutter$versionText • channel $channel • ${repositoryUrl ?? 'unknown source'}';
-    final frameworkText =
-        'Framework • revision $frameworkRevisionShort ($frameworkAge) • $frameworkCommitDate';
+    final String flutterText = flock.heading(versionText);
+    final String frameworkText = flock.frameworkText;
     String engineText;
     if (engineContentHash != null) {
       engineText = 'Engine • hash $engineContentHash (revision $engineRevisionShort) ($engineAge)';

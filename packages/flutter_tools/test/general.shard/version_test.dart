@@ -325,8 +325,9 @@ void main() {
         expect(flutterVersion.frameworkVersion, '0.0.0-unknown');
         expect(
           flutterVersion.toString(),
-          'Flutter • channel $channel • $flutterUpstreamUrl\n'
-          'Framework • revision 1234abcd (1 second ago) • ${getChannelUpToDateVersion()}\n'
+          'Flock (Flutter) • channel $channel • https://github.com/join-the-flock/flock.git\n'
+          'Flock framework • revision 1234abcd (1 second ago) • ${getChannelUpToDateVersion()}\n'
+          'Flutter upstream • revision unknown\n'
           'Engine • revision abcdefg (2 seconds ago) • ${getChannelUpToDateVersion()}\n'
           'Tools • Dart 2.12.0 • DevTools 2.8.0',
         );
@@ -361,7 +362,7 @@ void main() {
             command: <String>[
               'git',
               'fetch',
-              'https://github.com/flutter/flutter.git',
+              'https://github.com/join-the-flock/flock.git',
               '--tags',
               '-f',
             ],
@@ -511,8 +512,9 @@ void main() {
         expect(flutterVersion.frameworkVersion, '0.0.0-unknown');
         expect(
           flutterVersion.toString(),
-          'Flutter • channel $channel • $flutterUpstreamUrl\n'
-          'Framework • revision 1234abcd (1 second ago) • ${getChannelUpToDateVersion()}\n'
+          'Flock (Flutter) • channel $channel • https://github.com/join-the-flock/flock.git\n'
+          'Flock framework • revision 1234abcd (1 second ago) • ${getChannelUpToDateVersion()}\n'
+          'Flutter upstream • revision unknown\n'
           'Engine • revision abcdefg (2 seconds ago) • ${getChannelUpToDateVersion()}\n'
           'Tools • Dart 2.12.0 • DevTools 2.8.0',
         );
@@ -1675,7 +1677,13 @@ void main() {
         stdout: 'master',
       ),
       const FakeCommand(
-        command: <String>['git', 'fetch', 'https://github.com/flutter/flutter.git', '--tags', '-f'],
+        command: <String>[
+          'git',
+          'fetch',
+          'https://github.com/join-the-flock/flock.git',
+          '--tags',
+          '-f',
+        ],
       ),
       const FakeCommand(command: <String>['git', 'tag', '--points-at', 'HEAD']),
       ...mockGitTagHistory(
