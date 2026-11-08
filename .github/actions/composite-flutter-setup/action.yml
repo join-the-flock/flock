@@ -43,7 +43,7 @@ runs:
         with:
           persist-credentials: false
 
-      # If this is a branch / pr NOT on fluter/flutter, set the remote upstream
+      # If this is a branch / pr NOT on flutter/flutter, set the remote upstream
       # so the flutter tool can figure out the version
       - name: Set upstream (if not flutter/flutter)
         shell: bash
@@ -52,7 +52,9 @@ runs:
           if ! git remote get-url upstream >/dev/null 2>&1; then
             git remote add upstream https://github.com/flutter/flutter.git
           fi
-          git fetch --all --tags
+          # Preserve the fork's release tags; upstream tags may use the same
+          # names but point to different commits.
+          git fetch --no-tags upstream
 
       # If running locally; install the JDK - Github runners have everything on them
       - name: Set up our JDK environment
