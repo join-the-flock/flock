@@ -71,6 +71,7 @@ workspace:
   - examples/platform_view
   - examples/splash
   - examples/texture
+  - packages/flock
   - packages/flutter
   - packages/flutter_driver
   - packages/flutter_goldens

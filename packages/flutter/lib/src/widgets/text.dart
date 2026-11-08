@@ -15,6 +15,7 @@ library;
 import 'dart:math';
 import 'dart:ui' as ui show Hyphens, TextHeightBehavior;
 
+import 'package:flock/flock.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 
@@ -22,6 +23,7 @@ import 'basic.dart';
 import 'default_selection_style.dart';
 import 'framework.dart';
 import 'inherited_theme.dart';
+import 'localizations.dart';
 import 'media_query.dart';
 import 'selectable_region.dart';
 import 'selection_container.dart';
@@ -521,6 +523,7 @@ class Text extends StatelessWidget {
     )
     this.textScaleFactor,
     this.textScaler,
+    this.minLines,
     this.maxLines,
     this.semanticsLabel,
     this.semanticsIdentifier,
@@ -529,6 +532,8 @@ class Text extends StatelessWidget {
     this.hyphens,
     this.selectionColor,
   }) : textSpan = null,
+       assert(minLines == null || minLines > 0),
+       assert(maxLines == null || minLines == null || maxLines >= minLines),
        assert(
          textScaler == null || textScaleFactor == null,
          'textScaleFactor is deprecated and cannot be specified when textScaler is specified.',
@@ -567,6 +572,7 @@ class Text extends StatelessWidget {
     this.hyphens,
     this.selectionColor,
   }) : data = null,
+       minLines = null,
        assert(
          textScaler == null || textScaleFactor == null,
          'textScaleFactor is deprecated and cannot be specified when textScaler is specified.',
@@ -660,6 +666,23 @@ class Text extends StatelessWidget {
 
   /// {@macro flutter.painting.textPainter.textScaler}
   final TextScaler? textScaler;
+
+  /// The minimum number of lines of space to reserve for this text.
+  ///
+  /// Extra space appears below the text. The minimum height is measured using
+  /// empty lines with the effective [style], [strutStyle], text scaling, and
+  /// [textHeightBehavior]. Parent layout constraints still take precedence.
+  /// Text with more lines can grow until it reaches [maxLines], if specified.
+  /// Setting both properties to the same value reserves a fixed number of lines.
+  ///
+  /// This does not add characters to the text or change its overflow, selection,
+  /// or semantics label. It is only supported by the plain [Text] constructor;
+  /// [Text.rich] always leaves this null.
+  ///
+  /// If non-null, must be greater than zero and no greater than the effective
+  /// [maxLines], including a value inherited from [DefaultTextStyle].
+  /// Defaults to null, which reserves no additional space.
+  final int? minLines;
 
   /// An optional maximum number of lines for the text to span, wrapping if necessary.
   /// If the text exceeds the given number of lines, it will be truncated according
@@ -808,6 +831,25 @@ class Text extends StatelessWidget {
         text: effectiveTextSpan,
       );
     }
+    if (minLines != null) {
+      final int? effectiveMaxLines = maxLines ?? defaultTextStyle.maxLines;
+      assert(
+        effectiveMaxLines == null || minLines! <= effectiveMaxLines,
+        'minLines must not exceed maxLines, including an inherited DefaultTextStyle.maxLines.',
+      );
+      result = FlockTextMinLines(
+        text: TextSpan(style: effectiveTextSpan.style, text: '\n' * (minLines! - 1)),
+        textDirection: textDirection ?? Directionality.of(context),
+        textScaler: textScaler,
+        locale: locale ?? Localizations.maybeLocaleOf(context),
+        strutStyle: effectiveStrutStyle,
+        textHeightBehavior:
+            textHeightBehavior ??
+            defaultTextStyle.textHeightBehavior ??
+            DefaultTextHeightBehavior.maybeOf(context),
+        child: result,
+      );
+    }
     if (semanticsLabel != null || semanticsIdentifier != null) {
       result = Semantics(
         textDirection: textDirection,
@@ -843,6 +885,7 @@ class Text extends StatelessWidget {
     );
     properties.add(EnumProperty<TextOverflow>('overflow', overflow, defaultValue: null));
     properties.add(DoubleProperty('textScaleFactor', textScaleFactor, defaultValue: null));
+    properties.add(IntProperty('minLines', minLines, defaultValue: null));
     properties.add(IntProperty('maxLines', maxLines, defaultValue: null));
     properties.add(
       EnumProperty<TextWidthBasis>('textWidthBasis', textWidthBasis, defaultValue: null),

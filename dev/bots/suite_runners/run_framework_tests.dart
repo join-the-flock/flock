@@ -317,6 +317,7 @@ Future<void> frameworkTestsRunner() async {
         '--exclude-tags=web',
       ],
     );
+    await runFlutterTest(path.join(flutterRoot, 'packages', 'flock'));
     await runFlutterTest(path.join(flutterRoot, 'packages', 'flutter_goldens'));
     await runFlutterTest(path.join(flutterRoot, 'packages', 'flutter_localizations'));
     await runFlutterTest(path.join(flutterRoot, 'packages', 'flutter_test'));
