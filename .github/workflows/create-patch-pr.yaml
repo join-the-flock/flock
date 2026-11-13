@@ -33,7 +33,7 @@ jobs:
       # Only inspect the PR's Git history. Never execute scripts from its checkout
       # in this privileged pull_request_target workflow.
       - name: Checkout PR commits
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
@@ -55,7 +55,7 @@ jobs:
           echo "base=$BASE" >> "$GITHUB_OUTPUT"
 
       - name: Checkout Nest tooling
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: join-the-flock/nest
           ref: main
@@ -70,7 +70,7 @@ jobs:
         run: dart pub get --enforce-lockfile
 
       - name: Checkout destination repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: ${{ env.DEST_REPO }}
           token: ${{ env.GH_TOKEN }}
